@@ -17,11 +17,25 @@
   font-weight: 600;
 }
 
+/* 查看鱼缸按钮容器 */
+.view-tank-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.view-tank-container .tank-button {
+  width: 100%;
+  max-width: 350px;
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
 /* 样式控制区域 */
 .style-controls {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
   margin-bottom: 20px;
 }
 

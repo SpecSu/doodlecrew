@@ -14,6 +14,7 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
   const [currentPath, setCurrentPath] = useState<Point[]>([]); // 当前正在绘制的路径
   const [lineWidth, setLineWidth] = useState<number>(5); // 当前选择的笔触粗细（默认5px）
   const [lineWidths] = useState<number[]>([3, 5, 8, 12]); // 可用的笔触粗细选项
+  const [history, setHistory] = useState<PathSegment[][]>([]); // 用于撤销功能的历史记录数组
   
   // 颜色选项
   const colors = [
@@ -51,56 +52,55 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
     }
     
     // 绘制所有路径
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      
-      const context = canvas.getContext('2d');
-      if (!context) return;
-      
-      // 清空画布并设置背景色
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.fillStyle = '#2B3A72';
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // 检查是否有任何路径
-      const hasAnyPath = allSegments.some(s => s.points.length > 0);
-      
-      // 绘制所有已完成的路径和当前路径
-      if (hasAnyPath) {
-        allSegments.forEach(segment => {
-          if (segment.points.length > 0) {
-            context.beginPath();
-            context.moveTo(segment.points[0].x, segment.points[0].y);
-            
-            for (let i = 1; i < segment.points.length; i++) {
-              context.lineTo(segment.points[i].x, segment.points[i].y);
-            }
-            
-            context.strokeStyle = segment.color;
-            context.lineWidth = segment.lineWidth;
-            context.lineCap = 'round';
-            context.lineJoin = 'round';
-            context.stroke();
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    
+    // 清空画布并设置背景色
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#2B3A72';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 检查是否有任何路径
+    const hasAnyPath = allSegments.some(s => s.points.length > 0);
+    
+    // 绘制所有已完成的路径和当前路径
+    if (hasAnyPath) {
+      allSegments.forEach(segment => {
+        if (segment.points.length > 0) {
+          context.beginPath();
+          context.moveTo(segment.points[0].x, segment.points[0].y);
+          
+          for (let i = 1; i < segment.points.length; i++) {
+            context.lineTo(segment.points[i].x, segment.points[i].y);
           }
-        });
-      }
-      
-      // 绘制提示文本
-      if (!hasAnyPath) {
-        context.fillStyle = '#999';
-        context.font = '16px Arial';
-        context.textAlign = 'center';
-        context.fillText('请在画布上绘制一条鱼', canvas.width / 2, canvas.height / 2);
-      }
-    }, [allSegments, color, lineWidth]);
+          
+          context.strokeStyle = segment.color;
+          context.lineWidth = segment.lineWidth;
+          context.lineCap = 'round';
+          context.lineJoin = 'round';
+          context.stroke();
+        }
+      });
+    }
+  }, [allSegments, color, lineWidth]);
   
-  // 获取触摸点位置
+  // 获取触摸点位置（考虑画布缩放）
   const getTouchPosition = (e: React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    
+    // 计算缩放比例
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    // 根据缩放比例调整坐标
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    
     return { x, y };
   };
 
@@ -119,32 +119,60 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
   // 处理点抬起事件（鼠标或触摸）
   const handlePointerUp = () => {
     if (currentPath.length > 0) {
-      setPathSegments(prevSegments => [...prevSegments, { points: currentPath, color, lineWidth }]); // 保存当前路径到已完成路径段数组
+      // 保存当前状态到历史记录，然后添加新路径
+      setPathSegments(prevSegments => {
+        // 将当前状态保存到历史记录
+        setHistory(prevHistory => [...prevHistory, prevSegments]);
+        // 添加新路径
+        return [...prevSegments, { points: currentPath, color, lineWidth }];
+      });
       setCurrentPath([]); // 清空当前路径，准备绘制新路径
     }
     setIsDrawing(false);
   };
 
-  // 鼠标按下事件
+  // 撤销上一步操作
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    
+    // 获取上一步的状态
+    const lastHistory = history[history.length - 1];
+    setHistory(prevHistory => prevHistory.slice(0, -1));
+    setPathSegments(lastHistory);
+  };
+
+  // 鼠标按下事件（考虑画布缩放）
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    
+    // 计算缩放比例
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    // 根据缩放比例调整坐标
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
     
     handlePointerDown(x, y);
   };
   
-  // 鼠标移动事件
+  // 鼠标移动事件（考虑画布缩放）
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas || !isDrawing) return;
     
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    
+    // 计算缩放比例
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    // 根据缩放比例调整坐标
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
     
     handlePointerMove(x, y);
   };
@@ -193,6 +221,8 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
   
   // 清除画布
     const handleClear = () => {
+      // 保存当前状态到历史记录
+      setHistory(prevHistory => [...prevHistory, pathSegments]);
       setPathSegments([]);
       setCurrentPath([]);
     };
@@ -201,9 +231,18 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
     <div className="drawing-tool">
       <h2>绘制你的鱼</h2>
       
+      {/* 查看鱼缸按钮 - 移到页头和画布之间 */}
+      <div className="view-tank-container">
+        <button 
+          onClick={onViewFishTank} 
+          className="control-button tank-button"
+        >
+          查看鱼缸
+        </button>
+      </div>
+      
       {/* 样式控制区域 */}
       <div className="style-controls">
-        <h3 style={{ margin: 0, textAlign: 'center', color: '#333', fontSize: '16px' }}>选择颜色</h3>
         <div className="color-picker">
           {colors.map(c => (
             <button
@@ -216,7 +255,6 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
           ))}
         </div>
         
-        <h3 style={{ margin: 0, textAlign: 'center', color: '#333', fontSize: '16px' }}>选择笔触粗细</h3>
         <div className="line-width-picker">
           {lineWidths.map(w => (
             <button
@@ -249,17 +287,18 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
       {/* 控制按钮 */}
       <div className="drawing-controls">
         <button 
+          onClick={handleUndo} 
+          className="control-button"
+          disabled={history.length === 0}
+        >
+          上一步
+        </button>
+        <button 
           onClick={handleClear} 
           className="control-button"
           disabled={pathSegments.length === 0 && currentPath.length === 0}
         >
           清除
-        </button>
-        <button 
-          onClick={onViewFishTank} 
-          className="control-button tank-button"
-        >
-          查看鱼缸
         </button>
         <button 
           onClick={() => {
