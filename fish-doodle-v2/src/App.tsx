@@ -206,6 +206,16 @@ function App() {
     <header className="app-header">
       <h1 className="app-title">🐟 Doodle Fish</h1>
       <p className="app-subtitle">绘制你的鱼，让它在社区鱼缸中畅游</p>
+      {currentView === 'drawing' && (
+        <div className="view-tank-container">
+          <button 
+            onClick={() => setCurrentView('tank')} 
+            className="control-button tank-button"
+          >
+            查看鱼缸
+          </button>
+        </div>
+      )}
     </header>
   );
   
@@ -223,7 +233,6 @@ function App() {
         {currentView === 'drawing' ? (
           <DrawingTool
             onDrawingComplete={handleDrawingComplete}
-            onViewFishTank={() => setCurrentView('tank')}
             color={selectedColor}
             onColorChange={setSelectedColor}
           />

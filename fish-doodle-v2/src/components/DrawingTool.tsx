@@ -4,7 +4,6 @@ import './DrawingTool.css';
 
 const DrawingTool: React.FC<DrawingToolProps> = ({
   onDrawingComplete,
-  onViewFishTank,
   color,
   onColorChange
 }) => {
@@ -259,16 +258,6 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
       
       {/* 提示文案 */}
       <h2 style={{ color: '#334155', fontSize: '18px', margin: '16px 0', textAlign: 'center', fontWeight: '500' }}>画一条你的鱼</h2>
-      
-      {/* 查看鱼缸按钮 - 移到页头区域副标题下方 */}
-      <div className="view-tank-container">
-        <button 
-          onClick={onViewFishTank} 
-          className="control-button tank-button"
-        >
-          查看鱼缸
-        </button>
-      </div>
       
       {/* 画布 */}
       <canvas

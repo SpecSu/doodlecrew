@@ -29,7 +29,7 @@ export interface Fish {
 // 定义绘图工具的类型
 export interface DrawingToolProps {
   onDrawingComplete: (fish: Fish) => void;
-  onViewFishTank: () => void;
+  onViewFishTank?: () => void; // 可选属性
   color: string;
   onColorChange: (color: string) => void;
 }
