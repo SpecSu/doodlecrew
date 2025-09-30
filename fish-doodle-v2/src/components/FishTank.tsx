@@ -149,8 +149,9 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
     // 移动到鱼的位置
     ctx.translate(fish.x, fish.y);
     
-    // 应用缩放
-    ctx.scale(scale, scale);
+    // 应用缩放 - 将尺寸等比缩小50%
+    const displayScale = scale * 0.5;
+    ctx.scale(displayScale, displayScale);
     
     // 应用旋转 - 调整角度使得鱼的头部朝向移动方向
     // 添加Math.PI确保鱼的头部朝向前方而不是尾部
