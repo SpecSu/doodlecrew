@@ -195,7 +195,6 @@
   background: #ff6b6b;
   color: white;
   box-shadow: none;
-  min-width: 140px;
 }
 
 .submit-button:hover:not(:disabled) {
