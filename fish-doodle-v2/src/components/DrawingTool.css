@@ -65,8 +65,8 @@
 
 .color-option.selected {
   transform: scale(1.15);
-  border-color: #ff6b6b;
-  box-shadow: 0 0 0 2px white, 0 0 0 4px #ff6b6b;
+  border-color: #000000;
+  box-shadow: 0 0 0 4px #000000;
 }
 
 .color-option.selected::after {

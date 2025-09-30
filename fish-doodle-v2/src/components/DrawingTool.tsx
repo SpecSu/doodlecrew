@@ -229,8 +229,6 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
   
   return (
     <div className="drawing-tool">
-      <h2>绘制你的鱼</h2>
-      
       {/* 查看鱼缸按钮 - 移到页头和画布之间 */}
       <div className="view-tank-container">
         <button 
@@ -268,6 +266,9 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
           ))}
         </div>
       </div>
+      
+      {/* 提示文案 */}
+      <h2 style={{ color: '#334155', fontSize: '18px', margin: '16px 0', textAlign: 'center', fontWeight: '500' }}>画一条你的鱼</h2>
       
       {/* 画布 */}
       <canvas
