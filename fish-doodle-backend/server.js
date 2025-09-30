@@ -140,14 +140,14 @@ const initializeData = async () => {
   try {
     // 检查数据库连接状态
     if (mongoose.connection.readyState !== 1) {
-      console.error('Database not connected. Waiting for connection...');
-      // 等待连接建立
+      console.log('Waiting for database connection...');
+      // 等待连接建立，不设置严格超时
       await new Promise(resolve => {
-        mongoose.connection.once('connected', resolve);
-        // 设置超时
-        setTimeout(() => {
-          throw new Error('Database connection timeout during initialization');
-        }, 10000);
+        if (mongoose.connection.readyState === 1) {
+          resolve();
+        } else {
+          mongoose.connection.once('connected', resolve);
+        }
       });
     }
 
