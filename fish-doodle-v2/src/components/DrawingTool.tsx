@@ -38,8 +38,10 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
     canvas.width = 400;
     canvas.height = 300;
     
-    // 清空画布
+    // 清空画布并设置背景色
     context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#2B3A72';
+    context.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
   
   // 合并所有路径用于绘制
@@ -56,8 +58,10 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
       const context = canvas.getContext('2d');
       if (!context) return;
       
-      // 清空画布
+      // 清空画布并设置背景色
       context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = '#2B3A72';
+      context.fillRect(0, 0, canvas.width, canvas.height);
       
       // 检查是否有任何路径
       const hasAnyPath = allSegments.some(s => s.points.length > 0);
