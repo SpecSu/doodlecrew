@@ -48,6 +48,8 @@ function App() {
   // 鱼的状态
   const [fish, setFish] = useState<Fish[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 提交鱼时的加载状态
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 从API加载鱼数据
   useEffect(() => {
@@ -191,20 +193,27 @@ function App() {
   
   // 处理鱼绘制完成
   const handleDrawingComplete = async (fish: Fish) => {
+    setIsSubmitting(true);
     try {
       // 通过API添加新鱼
-      const newFish = await addFish(fish);
+      await addFish(fish);
       
-      // 更新本地状态
-      setFish(prevFish => [...prevFish, newFish]);
+      // 重新获取所有鱼数据，避免重复添加
+      const updatedFish = await getAllFish();
+      setFish(updatedFish);
       
       // 切换到鱼缸视图
       setCurrentView('tank');
     } catch (error) {
       console.error('Failed to save new fish:', error);
       // 添加失败时，直接更新本地状态
-      setFish(prevFish => [...prevFish, fish]);
+      setFish(prevFish => [...prevFish, {
+        ...fish,
+        id: fish.id || `fish-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      }]);
       setCurrentView('tank');
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -234,10 +243,10 @@ function App() {
       {renderHeader()}
       
       <main className="app-main">
-        {isLoading && (
+        {(isLoading || isSubmitting) && (
           <div className="loading-overlay">
             <div className="loading-spinner"></div>
-            <p>加载鱼群中...</p>
+            <p>{isSubmitting ? '保存你的鱼到鱼缸中...' : '加载鱼群中...'}</p>
           </div>
         )}
         {currentView === 'drawing' ? (
