@@ -132,13 +132,38 @@ function App() {
   // 页面状态（绘制页面或鱼缸页面）
   const [currentView, setCurrentView] = useState<'drawing' | 'tank'>('tank');
   
-  // 定期刷新鱼数据，确保不同设备之间的数据同步
+  // 定期刷新鱼数据，确保不同设备之间的数据同步，但保持现有鱼的动画状态
   useEffect(() => {
     const refreshInterval = setInterval(async () => {
-      if (!isLoading) {
+      if (!isLoading && fish.length > 0) {
         try {
-          const updatedFish = await getAllFish();
-          setFish(updatedFish);
+          const updatedFishFromAPI = await getAllFish();
+          
+          // 创建现有鱼ID的映射，保持它们的位置、速度等动画状态
+          const existingFishMap = new Map(fish.map(f => [f.id, f]));
+          
+          // 更新鱼数据但保留动画状态
+          const mergedFish = updatedFishFromAPI.map(apiFish => {
+            const existingFish = existingFishMap.get(apiFish.id);
+            if (existingFish) {
+              // 保留现有鱼的动画状态（位置、速度等）
+              return {
+                ...apiFish,
+                x: existingFish.x,
+                y: existingFish.y,
+                speedX: existingFish.speedX,
+                speedY: existingFish.speedY,
+                rotation: existingFish.rotation
+              };
+            }
+            // 对于新鱼，直接使用API数据
+            return apiFish;
+          });
+          
+          // 只在有变化时更新状态
+          if (JSON.stringify(mergedFish) !== JSON.stringify(fish)) {
+            setFish(mergedFish);
+          }
         } catch (error) {
           console.error('Failed to refresh fish data:', error);
         }
@@ -146,7 +171,7 @@ function App() {
     }, 10000); // 每10秒刷新一次
     
     return () => clearInterval(refreshInterval);
-  }, [isLoading]);
+  }, [isLoading, fish]);
   
   // 处理鱼绘制完成
   const handleDrawingComplete = async (fish: Fish) => {
