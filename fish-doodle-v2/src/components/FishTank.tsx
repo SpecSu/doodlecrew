@@ -201,8 +201,10 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
     const deltaTime = currentTime - lastUpdateTimeRef.current;
     lastUpdateTimeRef.current = currentTime;
     
-    // 清除画布
+    // 清除画布并设置背景色
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#2B3A72';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // 更新所有鱼的状态（创建新对象，而不是直接修改）
     const updatedFish = enhancedFish.map(fish => {
