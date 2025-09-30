@@ -102,6 +102,11 @@ body {
   border-radius: 12px;
 }
 
+/* 加载文字颜色 */
+.loading-overlay p {
+  color: white;
+}
+
 /* 加载动画 */
 .loading-spinner {
   width: 50px;

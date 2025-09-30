@@ -27,7 +27,10 @@
   width: 100%;
   flex: 1;
   min-height: 0;
-  border-radius: 12px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
   overflow: visible;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   background: #2B3A72;

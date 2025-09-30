@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import DrawingTool from './components/DrawingTool';
 import FishTank from './components/FishTank';
 import type { Fish } from './types';
@@ -206,14 +206,6 @@ function App() {
     <header className="app-header">
       <h1 className="app-title">🐟 Doodle Fish</h1>
       <p className="app-subtitle">绘制你的鱼，让它在社区鱼缸中畅游</p>
-      {currentView === 'tank' && (
-        <button 
-          className="draw-new-button"
-          onClick={handleDrawNewFish}
-        >
-          绘制新鱼
-        </button>
-      )}
     </header>
   );
   
@@ -236,7 +228,17 @@ function App() {
             onColorChange={setSelectedColor}
           />
         ) : (
-          <FishTank fish={fish} />
+          <React.Fragment>
+            <FishTank fish={fish} />
+            <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '20px' }}>
+              <button 
+                className="draw-new-button"
+                onClick={handleDrawNewFish}
+              >
+                画一条新鱼
+              </button>
+            </div>
+          </React.Fragment>
         )}
       </main>
       

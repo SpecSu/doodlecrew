@@ -12,8 +12,8 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [pathSegments, setPathSegments] = useState<PathSegment[]>([]); // 包含颜色和粗细信息的路径段数组
   const [currentPath, setCurrentPath] = useState<Point[]>([]); // 当前正在绘制的路径
-  const [lineWidth, setLineWidth] = useState<number>(3); // 当前选择的笔触粗细
-  const [lineWidths] = useState<number[]>([2, 3, 5, 8]); // 可用的笔触粗细选项
+  const [lineWidth, setLineWidth] = useState<number>(5); // 当前选择的笔触粗细（默认5px）
+  const [lineWidths] = useState<number[]>([3, 5, 8, 12]); // 可用的笔触粗细选项
   
   // 颜色选项
   const colors = [
