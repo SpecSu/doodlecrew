@@ -256,11 +256,13 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
         </div>
       </div>
       
-      {/* 提示文案 */}
-      <h2 style={{ color: '#334155', fontSize: '18px', margin: '16px 0', textAlign: 'center', fontWeight: '500' }}>画一条你的鱼</h2>
-      
-      {/* 画布 */}
-      <canvas
+      {/* 画布区域 */}
+      <div className="canvas-container">
+        {/* 提示文案 - 移到画布区域顶部 */}
+        <h2 style={{ color: '#334155', fontSize: '18px', margin: '8px 0 16px 0', textAlign: 'center', fontWeight: '500' }}>画一条你的鱼</h2>
+        
+        {/* 画布 */}
+        <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -271,10 +273,11 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchCancel}
         className="drawing-canvas"
-        style={{ touchAction: 'none' }} // 防止浏览器默认触摸行为
-      />
-      
-      {/* 控制按钮 */}
+            style={{ touchAction: 'none' }} // 防止浏览器默认触摸行为
+          />
+        </div>
+        
+        {/* 控制按钮 */}
       <div className="drawing-controls">
         <button 
           onClick={handleUndo} 
