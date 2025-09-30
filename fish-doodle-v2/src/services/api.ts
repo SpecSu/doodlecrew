@@ -164,28 +164,21 @@ export const clearAllFish = async (): Promise<void> => {
     // 模拟网络延迟
     await delay(300);
     
-    try {
-      // 尝试清除后端API中的所有鱼
-      const response = await fetch(`${API_BASE_URL}/api/fish`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        // 清除本地备份
-        localStorage.removeItem(LOCAL_BACKUP_KEY);
-      } else {
-        console.warn('Failed to clear fish from backend API:', response.status);
+    // 直接调用后端API清除所有鱼
+    const response = await fetch(`${API_BASE_URL}/api/fish`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
       }
-    } catch (apiError) {
-      console.warn('Backend API unavailable when clearing fish:', apiError);
-    }
+    });
     
-    // 只清除本地备份
-    localStorage.removeItem(LOCAL_BACKUP_KEY);
+    if (!response.ok) {
+      console.error('Failed to clear fish from backend API:', response.status);
+      const errorText = await response.text();
+      throw new Error(`Failed to clear fish: ${response.status} ${errorText}`);
+    }
   } catch (error) {
     console.error('Failed to clear fish:', error);
+    throw error; // 直接抛出错误，不使用本地兜底
   }
 };
