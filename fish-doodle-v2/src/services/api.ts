@@ -80,10 +80,16 @@ const LOCAL_BACKUP_KEY = 'fish-doodle-local-backup';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 后端API基础URL
-// 在生产环境中，需要在Vercel项目设置中配置正确的后端API地址作为环境变量
+// 在Vercel项目设置中已配置环境变量VITE_API_URL
 // 环境变量名: VITE_API_URL
-// 例如: https://your-backend-api-url.com
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// 值: 你的实际后端API地址
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+// 确保API地址已配置
+if (!API_BASE_URL) {
+  console.error('错误: 未配置后端API地址，请在Vercel项目设置中添加VITE_API_URL环境变量');
+  throw new Error('Backend API URL is not configured');
+}
 
 // 获取所有鱼
 export const getAllFish = async (): Promise<Fish[]> => {
