@@ -62,15 +62,16 @@
 @media (max-width: 480px) {
   .fish-tank-container {
     padding: 5px;
-    height: 100vh;
+    height: auto;
     max-height: 100vh;
     overflow: hidden;
   }
   
   .fish-tank {
-    height: calc(100vh - 100px); /* 减去标题和计数的高度 */
+    min-height: 400px; /* 设置最小高度，防止内容太少时过于压缩 */
     border-radius: 8px;
     width: 100%;
+    height: auto;
   }
   
   .fish-tank-container h2 {

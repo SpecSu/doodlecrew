@@ -43,6 +43,17 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
   const initializeFishBehavior = (fish: Fish): SimpleSwimBehavior => {
     // 设置基础速度 (1-2像素/帧)
     const baseSpeed = 1 + Math.random();
+    const canvas = canvasRef.current;
+    
+    // 默认位置，但会在组件挂载后调整
+    let x = fish.x;
+    let y = fish.y;
+    
+    // 如果有canvas尺寸信息，确保鱼在屏幕内初始化
+    if (canvas && (x === undefined || y === undefined || x < 0 || x > canvas.width || y < 0 || y > canvas.height)) {
+      x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1; // 避免靠近边缘
+      y = Math.random() * canvas.height * 0.8 + canvas.height * 0.1;
+    }
     
     // 随机初始方向
     const angle = Math.random() * Math.PI * 2;
@@ -54,8 +65,8 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
     const nextDirectionChange = Date.now() + directionChangeInterval;
     
     return {
-      x: fish.x,
-      y: fish.y,
+      x,
+      y,
       directionX,
       directionY,
       baseSpeed,
@@ -227,23 +238,51 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
 
   // 响应式画布大小
   useEffect(() => {
+    // 响应式调整画布大小
     const handleResize = () => {
-      console.log('Resizing canvas');
       const canvas = canvasRef.current;
       if (canvas) {
         const container = canvas.parentElement;
         if (container) {
-          canvas.width = container.clientWidth;
-          canvas.height = container.clientHeight;
+          const rect = container.getBoundingClientRect();
+          canvas.width = rect.width;
+          canvas.height = rect.height;
         }
       }
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
-    
+
+    // 检查是否为移动设备，并在移动端调整容器高度
+    const updateMobileHeight = () => {
+      const isMobile = window.innerWidth <= 480;
+      const container = document.querySelector('.fish-tank-container') as HTMLElement;
+      const fishTank = document.querySelector('.fish-tank') as HTMLElement;
+      const appHeader = document.querySelector('.app-header') as HTMLElement;
+      const appFooter = document.querySelector('.app-footer') as HTMLElement;
+      
+      if (isMobile && fishTank && appHeader && appFooter && container) {
+        const headerHeight = appHeader.offsetHeight;
+        const footerHeight = appFooter.offsetHeight;
+        const containerPadding = 30; // 考虑容器内边距
+        
+        // 计算鱼缸的实际可用高度
+        const availableHeight = window.innerHeight - headerHeight - footerHeight - containerPadding;
+        
+        // 应用计算出的高度
+        fishTank.style.height = `${availableHeight}px`;
+        container.style.height = 'auto';
+        container.style.maxHeight = '100vh';
+      }
+    };
+
+    updateMobileHeight();
+    window.addEventListener('resize', updateMobileHeight);
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', updateMobileHeight);
     };
   }, []);
 
