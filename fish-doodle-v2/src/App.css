@@ -66,12 +66,13 @@ body {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25);
+  width: calc(100% - 20px);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .draw-new-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.35);
 }
 
 .draw-new-button:active {

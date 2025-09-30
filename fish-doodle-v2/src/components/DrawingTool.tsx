@@ -228,6 +228,9 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
   
   return (
     <div className="drawing-tool">
+      {/* 提示文案 - 移到颜色选择器上方 */}
+      <h2 style={{ color: '#334155', fontSize: '18px', margin: '0 0 16px 0', textAlign: 'center', fontWeight: '500' }}>画一条你的鱼</h2>
+      
       {/* 样式控制区域 */}
       <div className="style-controls">
         <div className="color-picker">
@@ -258,9 +261,6 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
       
       {/* 画布区域 */}
       <div className="canvas-container">
-        {/* 提示文案 - 移到画布区域顶部 */}
-        <h2 style={{ color: '#334155', fontSize: '18px', margin: '8px 0 16px 0', textAlign: 'center', fontWeight: '500' }}>画一条你的鱼</h2>
-        
         {/* 画布 */}
         <canvas
         ref={canvasRef}
