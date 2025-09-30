@@ -299,7 +299,7 @@ const DrawingTool: React.FC<DrawingToolProps> = ({
           className="control-button"
           disabled={pathSegments.length === 0 && currentPath.length === 0}
         >
-          清除
+          清空
         </button>
         <button 
           onClick={() => {

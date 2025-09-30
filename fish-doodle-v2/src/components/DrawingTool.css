@@ -65,8 +65,8 @@
 
 .color-option.selected {
   transform: scale(1.15);
-  border-color: #000000;
-  box-shadow: 0 0 0 4px #000000;
+  border-color: #4cc9f0;
+  box-shadow: 0 0 0 2px #4cc9f0;
 }
 
 .color-option.selected::after {
@@ -194,10 +194,11 @@
 .submit-button {
   background: #ff6b6b;
   color: white;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.25);
+  box-shadow: none;
+  min-width: 140px;
 }
 
 .submit-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+  box-shadow: none;
 }
