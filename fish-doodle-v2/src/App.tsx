@@ -117,52 +117,9 @@ function App() {
         }
       } catch (error) {
         console.error('Failed to load fish:', error);
-        // 加载失败时，显示默认鱼
-        const redFishSegments = createFishPathSegments('#FF5252');
-        const blueFishSegments = createFishPathSegments('#536DFE');
-        const greenFishSegments = createFishPathSegments('#4CAF50');
-        
-        setFish([
-          {
-            id: '1',
-            path: [...redFishSegments[0].points, ...redFishSegments[1].points, ...redFishSegments[2].points],
-            paths: redFishSegments.map(seg => seg.points),
-            pathSegments: redFishSegments,
-            color: '#FF5252',
-            x: 150,
-            y: 200,
-            rotation: 0,
-            scale: 1,
-            speedX: 0.3,
-            speedY: 0.1
-          },
-          {
-            id: '2',
-            path: [...blueFishSegments[0].points, ...blueFishSegments[1].points, ...blueFishSegments[2].points],
-            paths: blueFishSegments.map(seg => seg.points),
-            pathSegments: blueFishSegments,
-            color: '#536DFE',
-            x: 400,
-            y: 150,
-            rotation: Math.PI / 2,
-            scale: 0.8,
-            speedX: 0,
-            speedY: 0.2
-          },
-          {
-            id: '3',
-            path: [...greenFishSegments[0].points, ...greenFishSegments[1].points, ...greenFishSegments[2].points],
-            paths: greenFishSegments.map(seg => seg.points),
-            pathSegments: greenFishSegments,
-            color: '#4CAF50',
-            x: 600,
-            y: 250,
-            rotation: Math.PI,
-            scale: 0.9,
-            speedX: -0.25,
-            speedY: 0.1
-          }
-        ]);
+        // 显示错误提示，不使用本地数据
+        alert('无法连接到服务器，请稍后再试。');
+        setFish([]);
       } finally {
         setIsLoading(false);
       }
@@ -206,12 +163,9 @@ function App() {
       setCurrentView('tank');
     } catch (error) {
       console.error('Failed to save new fish:', error);
-      // 添加失败时，直接更新本地状态
-      setFish(prevFish => [...prevFish, {
-        ...fish,
-        id: fish.id || `fish-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      }]);
-      setCurrentView('tank');
+      // 显示错误提示，不更新本地状态
+      alert('无法保存你的鱼，请检查网络连接或稍后再试。');
+      // 停留在绘制页面，让用户可以重试
     } finally {
       setIsSubmitting(false);
     }

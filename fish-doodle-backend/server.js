@@ -22,29 +22,47 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/fish-doodl
 const uriParts = MONGO_URI.match(/mongodb\+srv:\/\/[^@]+@([^/]+)/);
 console.log('Connecting to MongoDB host:', uriParts ? uriParts[1] : 'localhost:27017');
 
-mongoose.connect(MONGO_URI)
+// 增强的数据库连接配置
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 5000, // 5秒超时
+  socketTimeoutMS: 45000, // 45秒套接字超时
+  family: 4, // 使用IPv4
+  autoIndex: true, // 启用自动索引
+  retryWrites: true, // 启用重试写入
+  w: 'majority', // 写入关注级别
+  writeConcern: { wtimeout: 10000 } // 写入超时10秒
+})
   .then(() => {
     console.log('Connected to MongoDB successfully');
     console.log('Database connection state:', mongoose.connection.readyState);
+    console.log('MongoDB version:', mongoose.version);
+    // 验证数据库访问权限
+    mongoose.connection.db.admin().ping()
+      .then(() => console.log('Database ping successful - read/write access confirmed'))
+      .catch(pingErr => console.error('Database ping failed:', pingErr));
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
     if (err.name === 'MongooseServerSelectionError') {
       console.error('Server selection error details:', err.reason);
+      // 检查连接字符串格式
+      if (MONGO_URI && !MONGO_URI.includes('@')) {
+        console.error('连接字符串格式可能不正确，缺少认证信息');
+      }
+    } else if (err.name === 'MongoNetworkError') {
+      console.error('网络错误 - 检查网络连接和防火墙设置');
+    } else if (err.name === 'MongoError' && err.code === 18) {
+      console.error('认证失败 - 检查用户名和密码是否正确');
     }
     // 如果连接失败，在控制台输出重试建议
-    console.log('\n建议：\n1. 确保MongoDB服务正在运行\n2. 检查连接字符串是否正确\n3. 若使用云数据库，确保IP白名单设置正确\n4. 可以临时使用内存存储模式继续开发');
+    console.log('\n建议：\n1. 确保MongoDB服务正在运行\n2. 检查连接字符串是否正确\n3. 若使用云数据库，确保IP白名单设置正确\n4. 确认认证信息有效\n5. 检查网络连接是否稳定');
   });
 
 // 中间件
 app.use(cors());
 app.use(bodyParser.json());
 
-// 如果数据库连接失败，使用内存存储作为后备
-let memoryFishData = [];
 
-// 检查数据库连接状态的辅助函数
-const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // 合并所有点用于向后兼容
 const mergePoints = (segments) => {
@@ -119,27 +137,33 @@ const initializePresetFish = () => {
 
 // 初始化数据
 const initializeData = async () => {
-  if (isDbConnected()) {
-    try {
-      // 检查数据库中是否已有鱼数据
-      const fishCount = await Fish.countDocuments();
-      if (fishCount === 0) {
-        // 如果数据库为空，插入预设鱼数据
-        const presetFish = initializePresetFish();
-        await Fish.insertMany(presetFish);
-        console.log('Inserted preset fish data into database');
-      } else {
-        console.log(`Found ${fishCount} fish in database`);
-      }
-    } catch (error) {
-      console.error('Error initializing database data:', error);
-      // 如果数据库操作失败，使用内存存储
-      memoryFishData = initializePresetFish();
+  try {
+    // 检查数据库连接状态
+    if (mongoose.connection.readyState !== 1) {
+      console.error('Database not connected. Waiting for connection...');
+      // 等待连接建立
+      await new Promise(resolve => {
+        mongoose.connection.once('connected', resolve);
+        // 设置超时
+        setTimeout(() => {
+          throw new Error('Database connection timeout during initialization');
+        }, 10000);
+      });
     }
-  } else {
-    // 如果数据库未连接，使用内存存储
-    memoryFishData = initializePresetFish();
-    console.log('Using in-memory storage since database is not connected');
+
+    // 检查数据库中是否已有鱼数据
+    const fishCount = await Fish.countDocuments();
+    if (fishCount === 0) {
+      // 如果数据库为空，插入预设鱼数据
+      const presetFish = initializePresetFish();
+      await Fish.insertMany(presetFish);
+      console.log('Inserted preset fish data into database');
+    } else {
+      console.log(`Found ${fishCount} fish in database`);
+    }
+  } catch (error) {
+    console.error('Error initializing database data:', error);
+    throw error; // 抛出错误，不再使用内存存储
   }
 };
 
@@ -151,12 +175,9 @@ initializeData();
 // 获取所有鱼
 app.get('/api/fish', async (req, res) => {
   try {
-    if (isDbConnected()) {
-      const fish = await Fish.find();
-      res.json(fish);
-    } else {
-      res.json(memoryFishData);
-    }
+    // 直接从数据库获取数据
+    const fish = await Fish.find();
+    res.json(fish);
   } catch (error) {
     console.error('Error getting fish data:', error);
     res.status(500).json({ error: 'Failed to get fish data' });
@@ -166,24 +187,59 @@ app.get('/api/fish', async (req, res) => {
 // 添加一条鱼
 app.post('/api/fish', async (req, res) => {
   try {
+    console.log('收到添加鱼的请求:', { 
+      hasBody: !!req.body, 
+      fishId: req.body?.id,
+      hasPathSegments: req.body?.pathSegments?.length > 0
+    });
+    
     const fish = req.body;
+    
+    // 数据验证
+    if (!fish || !fish.pathSegments || !Array.isArray(fish.pathSegments)) {
+      console.warn('无效的鱼数据格式 - 缺少pathSegments');
+      return res.status(400).json({ error: 'Invalid fish data - pathSegments is required' });
+    }
     
     // 确保鱼有唯一ID
     const newFish = {
       ...fish,
-      id: fish.id || `fish-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      id: fish.id || `fish-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: fish.createdAt || new Date(),
+      updatedAt: new Date()
     };
     
-    if (isDbConnected()) {
-      const savedFish = await Fish.create(newFish);
-      res.status(201).json(savedFish);
-    } else {
-      memoryFishData.push(newFish);
-      res.status(201).json(newFish);
-    }
+    console.log('尝试保存鱼到MongoDB:', { id: newFish.id, color: newFish.color });
+    const savedFish = await Fish.create(newFish);
+    console.log('鱼成功保存到数据库:', { id: savedFish.id });
+    res.status(201).json(savedFish);
   } catch (error) {
-    console.error('Error adding fish:', error);
-    res.status(500).json({ error: 'Failed to add fish' });
+    console.error('添加鱼时发生错误:', {
+      errorType: error.name,
+      errorMessage: error.message,
+      stack: error.stack?.split('\n')[0]
+    });
+    
+    // 如果是验证错误，返回更具体的信息
+    if (error.name === 'ValidationError') {
+      const validationErrors = {};
+      for (const field in error.errors) {
+        validationErrors[field] = error.errors[field].message;
+      }
+      return res.status(400).json({ 
+        error: 'Validation error',
+        details: validationErrors
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to add fish',
+      // 在开发环境中提供更详细的错误信息
+      isProduction: process.env.NODE_ENV === 'production' ? undefined : {
+        type: error.name,
+        message: error.message
+      }
+    });
   }
 });
 
@@ -193,25 +249,11 @@ app.put('/api/fish/:id', async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     
-    if (isDbConnected()) {
-      const updatedFish = await Fish.findOneAndUpdate({ id }, updates, { new: true });
-      if (!updatedFish) {
-        return res.status(404).json({ error: 'Fish not found' });
-      }
-      res.json(updatedFish);
-    } else {
-      const fishIndex = memoryFishData.findIndex(fish => fish.id === id);
-      if (fishIndex === -1) {
-        return res.status(404).json({ error: 'Fish not found' });
-      }
-      
-      memoryFishData[fishIndex] = {
-        ...memoryFishData[fishIndex],
-        ...updates
-      };
-      
-      res.json(memoryFishData[fishIndex]);
+    const updatedFish = await Fish.findOneAndUpdate({ id }, updates, { new: true });
+    if (!updatedFish) {
+      return res.status(404).json({ error: 'Fish not found' });
     }
+    res.json(updatedFish);
   } catch (error) {
     console.error('Error updating fish:', error);
     res.status(500).json({ error: 'Failed to update fish' });
@@ -223,22 +265,11 @@ app.delete('/api/fish/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    if (isDbConnected()) {
-      const result = await Fish.deleteOne({ id });
-      if (result.deletedCount === 0) {
-        return res.status(404).json({ error: 'Fish not found' });
-      }
-      res.json({ success: true });
-    } else {
-      const initialLength = memoryFishData.length;
-      memoryFishData = memoryFishData.filter(fish => fish.id !== id);
-      
-      if (memoryFishData.length === initialLength) {
-        return res.status(404).json({ error: 'Fish not found' });
-      }
-      
-      res.json({ success: true });
+    const result = await Fish.deleteOne({ id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Fish not found' });
     }
+    res.json({ success: true });
   } catch (error) {
     console.error('Error deleting fish:', error);
     res.status(500).json({ error: 'Failed to delete fish' });
@@ -248,13 +279,8 @@ app.delete('/api/fish/:id', async (req, res) => {
 // 清除所有鱼
 app.delete('/api/fish', async (req, res) => {
   try {
-    if (isDbConnected()) {
-      await Fish.deleteMany({});
-      res.json({ success: true });
-    } else {
-      memoryFishData = [];
-      res.json({ success: true });
-    }
+    await Fish.deleteMany({});
+    res.json({ success: true });
   } catch (error) {
     console.error('Error clearing fish:', error);
     res.status(500).json({ error: 'Failed to clear fish' });
