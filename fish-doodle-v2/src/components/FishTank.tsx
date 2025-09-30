@@ -173,6 +173,9 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // 防止默认行为，避免页面滚动
+    e.preventDefault();
+
     // 获取点击位置相对于画布的坐标
     const rect = canvas.getBoundingClientRect();
     let clientX, clientY;
@@ -242,14 +245,17 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
     setEnhancedFish(prevFish => 
       prevFish.map(fish => {
         if (fish.id === dragState.fishId) {
+          const newX = x - dragState.offsetX;
+          const newY = y - dragState.offsetY;
+          
           return {
             ...fish,
-            x: x - dragState.offsetX,
-            y: y - dragState.offsetY,
+            x: newX,
+            y: newY,
             behavior: {
               ...fish.behavior,
-              x: x - dragState.offsetX,
-              y: y - dragState.offsetY
+              x: newX,
+              y: newY
             }
           };
         }
@@ -449,21 +455,25 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
   }, []);
 
   return (
-    <div className="fish-tank">
-      <canvas
-        ref={canvasRef}
-        className="tank-canvas"
-        onMouseDown={handleStart}
-        onMouseMove={handleMove}
-        onMouseUp={handleEnd}
-        onMouseLeave={handleEnd}
-        onTouchStart={handleStart}
-        onTouchMove={handleMove}
-        onTouchEnd={handleEnd}
-        style={{ cursor: dragState.isDragging ? 'grabbing' : 'grab' }}
-      />
-    </div>
-  );
+      <div className="fish-tank">
+        <canvas
+          ref={canvasRef}
+          className="tank-canvas"
+          onMouseDown={handleStart}
+          onMouseMove={handleMove}
+          onMouseUp={handleEnd}
+          onMouseLeave={handleEnd}
+          onTouchStart={handleStart}
+          onTouchMove={handleMove}
+          onTouchEnd={handleEnd}
+          onTouchCancel={handleEnd}
+          style={{ 
+            cursor: dragState.isDragging ? 'grabbing' : 'grab',
+            touchAction: 'none' // 防止移动端页面滚动
+          }}
+        />
+      </div>
+    );
 };
 
 export default FishTank;
