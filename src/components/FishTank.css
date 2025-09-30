@@ -1,0 +1,61 @@
+/* FishTank 组件样式 */
+.fish-tank-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.fish-tank-container h2 {
+  color: #333;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.fish-count {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.fish-tank {
+  width: 100%;
+  height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+}
+
+.tank-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .fish-tank {
+    height: 450px; /* 增加平板设备上的高度 */
+  }
+  
+  .fish-tank-container h2 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fish-tank {
+    height: calc(100vh - 200px); /* 使用视口高度的计算值，确保在手机上有足够的空间 */
+    min-height: 400px; /* 设置最小高度，确保即使在小屏幕上也有足够的显示空间 */
+    border-radius: 8px;
+  }
+  
+  .fish-tank-container h2 {
+    font-size: 20px;
+  }
+  
+  .fish-count {
+    font-size: 14px;
+  }
+}

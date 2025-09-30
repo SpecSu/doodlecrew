@@ -1,0 +1,237 @@
+/* DrawingTool 组件样式 */
+.drawing-tool {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+  max-width: 440px;
+  margin: 0 auto 20px;
+  width: 100%;
+}
+
+/* 移动端优化 */
+@media (max-width: 480px) {
+  .drawing-tool {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .drawing-canvas {
+    height: 250px;
+    border-radius: 10px;
+  }
+
+  .style-controls {
+    gap: 12px;
+  }
+
+  .color-picker {
+    gap: 10px;
+  }
+
+  .color-option {
+    width: 32px;
+    height: 32px;
+  }
+
+  .line-width-picker {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .line-width-option {
+    min-width: 45px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .drawing-controls {
+    gap: 10px;
+  }
+
+  .control-button {
+    padding: 8px 14px;
+    font-size: 13px;
+    min-width: 90px;
+  }
+}
+
+.drawing-tool h2 {
+  color: #334155;
+  font-size: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* 样式控制区域 */
+.style-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* 颜色选择器样式 */
+.color-picker {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.color-option {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  position: relative;
+}
+
+.color-option:hover {
+  transform: scale(1.05);
+  border-color: #cbd5e1;
+}
+
+.color-option.selected {
+  transform: scale(1.15);
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #ff6b6b;
+}
+
+.color-option.selected::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7' /%3E%3C/svg%3E");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+/* 笔触粗细选择器样式 */
+.line-width-picker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.line-width-option {
+  min-width: 50px;
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 20px;
+  background: white;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  outline: none;
+}
+
+.line-width-option:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.line-width-option.selected {
+  border-color: #4cc9f0;
+  background: #4cc9f0;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 201, 240, 0.3);
+}
+
+/* 画布样式 */
+.drawing-canvas {
+  width: 100%;
+  height: 280px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+  cursor: crosshair;
+}
+
+.drawing-canvas:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+/* 控制按钮 */
+.drawing-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.control-button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  min-width: 100px;
+}
+
+.control-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 清除按钮样式 */
+.control-button:not(.tank-button):not(.submit-button) {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.control-button:not(.tank-button):not(.submit-button):hover:not(:disabled) {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+/* 查看鱼缸按钮样式 */
+.tank-button {
+  background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(76, 201, 240, 0.25);
+}
+
+.tank-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 201, 240, 0.35);
+}
+
+/* 放生按钮样式 */
+.submit-button {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff7e5f 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.25);
+}
+
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+}
