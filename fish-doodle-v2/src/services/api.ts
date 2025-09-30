@@ -141,11 +141,22 @@ export const addFish = async (fish: Fish): Promise<Fish> => {
     // 模拟网络延迟
     await delay(500);
     
-    // 确保鱼有唯一ID
+    // 确保鱼有唯一ID和所有必填字段
     const newFish = {
       ...fish,
-      id: fish.id || `fish-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      id: fish.id || `fish-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      // 确保所有必填字段都有值
+      speedX: fish.speedX !== undefined ? fish.speedX : 0.1,
+      speedY: fish.speedY !== undefined ? fish.speedY : 0.05,
+      rotation: fish.rotation !== undefined ? fish.rotation : 0,
+      x: fish.x !== undefined ? fish.x : Math.random() * 800 + 100,
+      y: fish.y !== undefined ? fish.y : Math.random() * 400 + 100,
+      scale: fish.scale !== undefined ? fish.scale : 1
     };
+    
+    // 添加调试日志，检查提交的数据
+    console.log('准备提交的鱼数据:', newFish);
+    console.log('检查必填字段:', {speedX: newFish.speedX, speedY: newFish.speedY, rotation: newFish.rotation});
     
     try {
       // 尝试添加到后端API
