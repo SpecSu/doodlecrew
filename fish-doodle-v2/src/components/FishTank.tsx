@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import type { Fish, FishTankProps, PathSegment } from '../types';
 import './FishTank.css';
 
@@ -16,13 +16,39 @@ interface SimpleSwimBehavior {
 // 增强型鱼对象，包含原始Fish属性和行为控制
 interface EnhancedFish extends Fish {
   behavior: SimpleSwimBehavior;
+  isDragging?: boolean; // 添加拖动状态
+}
+
+// 拖动状态接口
+interface DragState {
+  isDragging: boolean;
+  fishId: string | null;
+  offsetX: number;
+  offsetY: number;
 }
 
 const FishTank: React.FC<FishTankProps> = ({ fish }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [enhancedFish, setEnhancedFish] = useState<EnhancedFish[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [enhancedFish, setEnhancedFish] = useState<EnhancedFish[]>([]);
   const animationFrameRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number>(0);
+  const [dragState, setDragState] = useState<DragState>({
+    isDragging: false,
+    fishId: null,
+    offsetX: 0,
+    offsetY: 0
+  });
+
+  // 检查点是否在鱼的碰撞范围内
+  const isPointInFish = (fish: EnhancedFish, x: number, y: number): boolean => {
+    // 简化的碰撞检测 - 使用圆形碰撞区域
+    const distance = Math.sqrt(
+      Math.pow(x - fish.x, 2) + Math.pow(y - fish.y, 2)
+    );
+    // 根据鱼的大小调整碰撞半径
+    const collisionRadius = 30 * fish.scale;
+    return distance < collisionRadius;
+  }
 
   // 初始化鱼的行为属性
   useEffect(() => {
@@ -110,6 +136,9 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
 
   // 更新鱼的位置和行为
   const updateFish = (fish: EnhancedFish, deltaTime: number, canvasWidth: number, canvasHeight: number): void => {
+    // 如果鱼正在被拖动，暂停自动移动
+    if (fish.isDragging) return;
+
     const { behavior } = fish;
     
     // 时间平滑处理
@@ -137,6 +166,136 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
     // 更新鱼的位置信息
     fish.x = behavior.x;
     fish.y = behavior.y;
+  };
+
+  // 处理鼠标按下或触摸开始事件
+  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // 获取点击位置相对于画布的坐标
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    // 检查是否点击了鱼（从上层往下检查，确保正确的视觉层级）
+    for (let i = enhancedFish.length - 1; i >= 0; i--) {
+      const fish = enhancedFish[i];
+      if (isPointInFish(fish, x, y)) {
+        // 设置拖动状态
+        setDragState({
+          isDragging: true,
+          fishId: fish.id,
+          offsetX: x - fish.x,
+          offsetY: y - fish.y
+        });
+
+        // 更新鱼的拖动状态并移到数组末尾（视觉层级顶层）
+        const updatedFish = [...enhancedFish];
+        updatedFish.splice(i, 1);
+        updatedFish.push({
+          ...fish,
+          isDragging: true
+        });
+        setEnhancedFish(updatedFish);
+        break;
+      }
+    }
+  };
+
+  // 处理鼠标移动或触摸移动事件
+  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!dragState.isDragging || !dragState.fishId) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // 防止默认行为，避免页面滚动
+    e.preventDefault();
+
+    // 获取移动位置相对于画布的坐标
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    // 更新被拖动鱼的位置
+    setEnhancedFish(prevFish => 
+      prevFish.map(fish => {
+        if (fish.id === dragState.fishId) {
+          return {
+            ...fish,
+            x: x - dragState.offsetX,
+            y: y - dragState.offsetY,
+            behavior: {
+              ...fish.behavior,
+              x: x - dragState.offsetX,
+              y: y - dragState.offsetY
+            }
+          };
+        }
+        return fish;
+      })
+    );
+  };
+
+  // 处理鼠标抬起或触摸结束事件
+  const handleEnd = () => {
+    if (!dragState.isDragging || !dragState.fishId) return;
+
+    // 重置拖动状态并更新鱼的状态
+    setEnhancedFish(prevFish => 
+      prevFish.map(fish => {
+        if (fish.id === dragState.fishId) {
+          // 生成新的随机游动方向
+          const newAngle = Math.random() * Math.PI * 2;
+          const newDirectionX = Math.cos(newAngle);
+          const newDirectionY = Math.sin(newAngle);
+          
+          // 重置下次方向改变时间
+          const currentTime = Date.now();
+          const newDirectionChangeInterval = 3000 + Math.random() * 5000;
+          
+          return {
+            ...fish,
+            isDragging: false,
+            behavior: {
+              ...fish.behavior,
+              directionX: newDirectionX,
+              directionY: newDirectionY,
+              nextDirectionChange: currentTime + newDirectionChangeInterval
+            }
+          };
+        }
+        return fish;
+      })
+    );
+
+    setDragState({
+      isDragging: false,
+      fishId: null,
+      offsetX: 0,
+      offsetY: 0
+    });
   };
 
   // 绘制鱼的路径
@@ -294,6 +453,14 @@ const FishTank: React.FC<FishTankProps> = ({ fish }) => {
       <canvas
         ref={canvasRef}
         className="tank-canvas"
+        onMouseDown={handleStart}
+        onMouseMove={handleMove}
+        onMouseUp={handleEnd}
+        onMouseLeave={handleEnd}
+        onTouchStart={handleStart}
+        onTouchMove={handleMove}
+        onTouchEnd={handleEnd}
+        style={{ cursor: dragState.isDragging ? 'grabbing' : 'grab' }}
       />
     </div>
   );
